@@ -6,9 +6,10 @@
   <property name="lib" location="lib"/>
   <property name="module-name" value="auth-mgr"/>
   <property name="version" value="0.1"/>
+  <property name="module-dir" value="${module-name}-v${version}"/>
 
   <target name="init">
-    <mkdir dir="${build}/${module-name}"/>
+    <mkdir dir="${build}/${module-dir}"/>
   </target>
 
   <path id="compile-classpath">
@@ -18,14 +19,14 @@
   </path>
 
   <target name="compile" depends="init">
-    <javac srcdir="${src}" destdir="${build}/${module-name}" classpathref="compile-classpath" debug="on"
+    <javac srcdir="${src}" destdir="${build}/${module-dir}" classpathref="compile-classpath" debug="on"
            includeantruntime="false" target="1.7" source="1.7"/>
   </target>
 
   <target name="dist" depends="compile">
     <mkdir dir="${target}"/>
-    <copy file="mod.json" todir="${build}"/>
-    <jar jarfile="${target}/${module-name}-v${version}.jar" basedir="${build}"/>
+    <copy file="mod.json" todir="${build}/${module-dir}"/>
+    <zip destfile="${target}/mod.zip" basedir="${build}"/>
   </target>
 
   <target name="clean" description="clean up" >

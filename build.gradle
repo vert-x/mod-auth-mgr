@@ -41,7 +41,6 @@ repositories {
 }
 
 dependencies {
-  compile "javax.mail:mail:$javamailVersion"
   vertxProvided("org.vert-x:vertx-core:$vertxVersion")
   vertxProvided("org.vert-x:vertx-platform:$vertxVersion")
 

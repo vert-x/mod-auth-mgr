@@ -52,7 +52,7 @@ dependencies {
   testCompile("org.mozilla:rhino:$rhinoVersion")
 
   testCompile("org.vert-x:vertx-testframework:$vertxVersion") {
-      transitive = false // don't need all of the other language deps
+    transitive = false // don't need all of the other language deps
   }
 
   testCompile "junit:junit:$junitVersion"
@@ -76,15 +76,13 @@ task collectDeps(type: Copy) {
   destinationDir = file("build/deps")
   into("compile") {
     from configurations.compile
-    exclude "vertx-*.jar"
   }
   into("test") {
     from configurations.testCompile
-    exclude "vertx-*.jar"
   }
 }
 
-task dist(dependsOn: ['build', 'packageVertxModule']) {
+task dist(dependsOn: ['packageVertxModule']) {
   group = 'vert.x'
   description = 'prepare a distributable busmod "mod.zip" package'
 }

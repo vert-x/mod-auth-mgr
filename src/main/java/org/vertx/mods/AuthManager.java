@@ -115,8 +115,8 @@ public class AuthManager extends BusModBase {
     eb.send(persistorAddress, findMsg, new Handler<Message<JsonObject>>() {
       public void handle(Message<JsonObject> reply) {
 
-        if (reply.body.getString("status").equals("ok")) {
-          if (reply.body.getObject("result") != null) {
+        if (reply.body().getString("status").equals("ok")) {
+          if (reply.body().getObject("result") != null) {
 
             // Check if already logged in, if so logout of the old session
             LoginInfo info = logins.get(username);
@@ -141,7 +141,7 @@ public class AuthManager extends BusModBase {
             sendStatus("denied", message);
           }
         } else {
-          logger.error("Failed to execute login query: " + reply.body.getString("message"));
+          logger.error("Failed to execute login query: " + reply.body().getString("message"));
           sendError(message, "Failed to excecute login");
         }
       }

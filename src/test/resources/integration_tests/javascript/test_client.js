@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-load("vertx.js");
-load("vertx_tests.js");
+var container = require("container")
+var vertx = require("vertx");
+var vertxTests = require("vertx_tests");
+var vassert = require("vertx_assert");
+var console = require("console");
 
 var eb = vertx.eventBus;
 
@@ -211,8 +214,8 @@ function deleteAll() {
 var script = this;
 var persistorConfig = {address: 'test.persistor', db_name : 'test_db', fake: true}
 var authMgrConfig = {address: 'test.authMgr', 'persistor_address' : 'test.persistor', 'user_collection': 'users'}
-vertx.deployModule('io.vertx~mod-mongo-persistor~2.0.0-SNAPSHOT', persistorConfig, 1, function(err, depID) {
-  vertx.deployModule(java.lang.System.getProperty("vertx.modulename"), authMgrConfig, 1, function(err, depID) {
-    initTests(script);
+container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-SNAPSHOT', persistorConfig, 1, function(err, depID) {
+  container.deployModule(java.lang.System.getProperty("vertx.modulename"), authMgrConfig, 1, function(err, depID) {
+    vertxTests.startTests(script);
   });
 });

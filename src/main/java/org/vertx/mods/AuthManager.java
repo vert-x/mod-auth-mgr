@@ -126,7 +126,6 @@ public class AuthManager extends BusModBase {
             // Found
             final String sessionID = UUID.randomUUID().toString();
             long timerID = vertx.setTimer(sessionTimeout, new Handler<Long>() {
-            @Override
             public void handle(Long timerID) {
                 sessions.remove(sessionID);
                 logins.remove(username);
@@ -135,14 +134,16 @@ public class AuthManager extends BusModBase {
 
             //Put record returned from the db as session data 
             JsonObject sessionData = reply.body().getObject("result");
-            sessionData.putString("status", "ok");
 
-            //remove password so that we dont send it back over the wire
+            //remove id and password so that we dont send it back over the wire
+            sessionData.removeField("_id");
             sessionData.removeField("password");
 
             sessions.put(sessionID, sessionData);
             logins.put(username, new LoginInfo(timerID, sessionID));
-            JsonObject jsonReply = new JsonObject().putString("sessionID", sessionID);
+            
+            JsonObject jsonReply = sessionData.copy();
+            jsonReply.putString("sessionID", sessionID);
             sendOK(message, jsonReply);
           } else {
             // Not found

@@ -115,9 +115,8 @@ public class AuthManager extends BusModBase {
     eb.send(persistorAddress, findMsg, new Handler<Message<JsonObject>>() {
 
     public void handle(Message<JsonObject> reply) {
-        JsonObject authData = reply.body();
-        if (authData.getString("status").equals("ok")) {
-          if (authData.getObject("result") != null) {
+        if (reply.body().getString("status").equals("ok")) {
+          if (reply.body().getObject("result") != null) {
             // Check if already logged in, if so logout of the old session
             LoginInfo info = logins.get(username);
             if (info != null) {
@@ -134,10 +133,14 @@ public class AuthManager extends BusModBase {
               }
             });
 
+            //Put record returned from the db as session data 
+            JsonObject sessionData = reply.body().getObject("result");
+            sessionData.putString("status", "ok");
+
             //remove password so that we dont send it back over the wire
-            authData.removeField("password");
-            
-            sessions.put(sessionID, authData);
+            sessionData.removeField("password");
+
+            sessions.put(sessionID, sessionData);
             logins.put(username, new LoginInfo(timerID, sessionID));
             JsonObject jsonReply = new JsonObject().putString("sessionID", sessionID);
             sendOK(message, jsonReply);
@@ -165,7 +168,11 @@ public class AuthManager extends BusModBase {
   }
 
   protected boolean logout(String sessionID) {
-    String username = sessions.remove(sessionID).getString("username");
+    JsonObject session = sessions.remove(sessionID);
+    if (session == null)
+        return false;
+
+    String username = session.getString("username");
     if (username != null) {
       LoginInfo info = logins.remove(username);
       vertx.cancelTimer(info.timerID);

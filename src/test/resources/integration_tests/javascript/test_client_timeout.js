@@ -14,26 +14,28 @@
  * limitations under the License.
  */
 
-load('test_utils.js')
-load('vertx.js')
+var container = require("container")
+var vertx = require("vertx");
+var vertxTests = require("vertx_tests");
+var vassert = require("vertx_assert");
+var console = require("console");
 
-var tu = new TestUtils();
 var eb = vertx.eventBus;
 
 function testSessionTimeout() {
   deleteAll();
   storeEntries({username: 'tim', password: 'foo'});
   eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(typeof reply.sessionID != 'undefined');
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertTrue(typeof reply.sessionID != 'undefined');
     var sessionID = reply.sessionID;
     eb.send('test.authMgr.authorise', {sessionID: sessionID, password: 'foo'}, function(reply) {
-      tu.azzert(reply.status === 'ok');
+      vassert.assertEquals('ok', reply.status);
       // Allow session to timeout then try and validate again
-      vertx.setTimer(750, function() {
+      vertx.setTimer(1000, function() {
         eb.send('test.authMgr.authorise', {sessionID: sessionID, password: 'foo'}, function(reply) {
-          tu.azzert(reply.status === 'denied');
-          tu.testComplete();
+          vassert.assertEquals('denied', reply.status);
+          vassert.testComplete();
         });
       });
 
@@ -49,7 +51,7 @@ function storeEntries() {
       action: 'save',
       document: entry
     }, function(reply) {
-      tu.azzert(reply.status === 'ok');
+      vassert.assertEquals('ok', reply.status);
     });
   }
 }
@@ -60,23 +62,20 @@ function deleteAll() {
     action: 'delete',
     matcher: {}
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
   });
 }
 
-
-tu.registerTests(this);
-
-var persistorConfig = {address: 'test.persistor', 'db_name' : 'test_db'}
+var script = this;
+var persistorConfig = {address: 'test.persistor', 'db_name' : 'test_db', fake: true}
 var authMgrConfig = {address: 'test.authMgr', 'persistor_address' : 'test.persistor', 'user_collection': 'users',
-                     session_timeout: 500}
-vertx.deployModule('vertx.mongo-persistor-v1.0', persistorConfig, 1, function() {
-  vertx.deployModule('vertx.auth-mgr-v' + java.lang.System.getProperty('vertx.version'), authMgrConfig, 1, function() {
-    tu.appReady();
+                     session_timeout: 200}
+console.log("deploying module");
+container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-SNAPSHOT', persistorConfig, function(err, depID) {
+  if (err != null) {
+    err.printStackTrace();
+  }
+  container.deployModule(java.lang.System.getProperty("vertx.modulename"), authMgrConfig, function(err, depID) {
+    vertxTests.startTests(script);
   });
 });
-
-function vertxStop() {
-  tu.unregisterAll();
-  tu.appStopped();
-}

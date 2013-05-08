@@ -60,7 +60,6 @@ public class AuthManager extends BusModBase {
   /**
    * Start the busmod
    */
-  @Override
 public void start() {
     super.start();
 
@@ -79,21 +78,18 @@ public void start() {
     }
 
     loginHandler = new Handler<Message<JsonObject>>() {
-    @Override
     public void handle(Message<JsonObject> message) {
         doLogin(message);
       }
     };
     eb.registerHandler(address + ".login", loginHandler);
     logoutHandler = new Handler<Message<JsonObject>>() {
-    @Override
     public void handle(Message<JsonObject> message) {
         doLogout(message);
       }
     };
     eb.registerHandler(address + ".logout", logoutHandler);
     authoriseHandler = new Handler<Message<JsonObject>>() {
-    @Override
     public void handle(Message<JsonObject> message) {
         doAuthorise(message);
       }
@@ -117,12 +113,11 @@ public void start() {
     findMsg.putObject("matcher", matcher);
 
     eb.send(persistorAddress, findMsg, new Handler<Message<JsonObject>>() {
-    @Override
+
     public void handle(Message<JsonObject> reply) {
         JsonObject authData = reply.body;
         if (authData.getString("status").equals("ok")) {
           if (authData.getObject("result") != null) {
-
             // Check if already logged in, if so logout of the old session
             LoginInfo info = logins.get(username);
             if (info != null) {
@@ -150,7 +145,7 @@ public void start() {
             sendStatus("denied", message);
           }
         } else {
-          logger.error("Failed to execute login query: " + reply.body.getString("message"));
+          logger.error("Failed to execute login query: " + reply.body().getString("message"));
           sendError(message, "Failed to excecute login");
         }
       }

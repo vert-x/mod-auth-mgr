@@ -133,19 +133,12 @@ public class AuthManager extends BusModBase {
               }
             });
 
-            //Put record returned from the db as session data 
-            JsonObject sessionData = reply.body().getObject("result");
-
-            //remove id and password so that we dont send it back over the wire
-            sessionData.removeField("_id");
-            sessionData.removeField("password");
+            JsonObject sessionData = formSessionData(reply, sessionID);
 
             sessions.put(sessionID, sessionData);
             logins.put(username, new LoginInfo(timerID, sessionID));
             
-            JsonObject jsonReply = sessionData.copy();
-            jsonReply.putString("sessionID", sessionID);
-            sendOK(message, jsonReply);
+            sendOK(message, sessionData);
           } else {
             // Not found
             sendStatus("denied", message);
@@ -156,6 +149,17 @@ public class AuthManager extends BusModBase {
         }
       }
     });
+  }
+
+  private JsonObject formSessionData(Message<JsonObject> dbReply, final String sessionID) {
+      //Put record returned from the db as session data 
+      JsonObject sessionData = dbReply.body().getObject("result");
+
+      //remove id and password so that we dont send it back over the wire
+      sessionData.removeField("_id");
+      sessionData.removeField("password");
+      sessionData.putString("sessionID", sessionID);
+      return sessionData;
   }
 
   protected void doLogout(final Message<JsonObject> message) {

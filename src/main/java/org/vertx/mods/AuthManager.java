@@ -126,7 +126,7 @@ public class AuthManager extends BusModBase {
             // Found
             final String sessionID = UUID.randomUUID().toString();
             long timerID = vertx.setTimer(sessionTimeout, new Handler<Long>() {
-            public void handle(Long timerID) {
+              public void handle(Long timerID) {
                 sessions.remove(sessionID);
                 logins.remove(username);
               }

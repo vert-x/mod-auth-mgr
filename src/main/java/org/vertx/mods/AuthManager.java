@@ -114,8 +114,9 @@ public class AuthManager extends BusModBase {
 
     eb.send(persistorAddress, findMsg, new Handler<Message<JsonObject>>() {
 
-    public void handle(Message<JsonObject> reply) {
+      public void handle(Message<JsonObject> reply) {
         if (reply.body().getString("status").equals("ok")) {
+
           if (reply.body().getObject("result") != null) {
             // Check if already logged in, if so logout of the old session
             LoginInfo info = logins.get(username);

@@ -37,7 +37,7 @@ public class AuthManager extends BusModBase {
   private Handler<Message<JsonObject>> logoutHandler;
   private Handler<Message<JsonObject>> authoriseHandler;
 
-  protected final Map<String, String> sessions = new HashMap<>();
+  protected final Map<String, JsonObject> sessions = new HashMap<>();
   protected final Map<String, LoginInfo> logins = new HashMap<>();
 
   private static final long DEFAULT_SESSION_TIMEOUT = 30 * 60 * 1000;
@@ -60,7 +60,8 @@ public class AuthManager extends BusModBase {
   /**
    * Start the busmod
    */
-  public void start() {
+  @Override
+public void start() {
     super.start();
 
     this.address = getOptionalStringConfig("address", "vertx.basicauthmanager");
@@ -78,19 +79,22 @@ public class AuthManager extends BusModBase {
     }
 
     loginHandler = new Handler<Message<JsonObject>>() {
-      public void handle(Message<JsonObject> message) {
+    @Override
+    public void handle(Message<JsonObject> message) {
         doLogin(message);
       }
     };
     eb.registerHandler(address + ".login", loginHandler);
     logoutHandler = new Handler<Message<JsonObject>>() {
-      public void handle(Message<JsonObject> message) {
+    @Override
+    public void handle(Message<JsonObject> message) {
         doLogout(message);
       }
     };
     eb.registerHandler(address + ".logout", logoutHandler);
     authoriseHandler = new Handler<Message<JsonObject>>() {
-      public void handle(Message<JsonObject> message) {
+    @Override
+    public void handle(Message<JsonObject> message) {
         doAuthorise(message);
       }
     };
@@ -113,10 +117,11 @@ public class AuthManager extends BusModBase {
     findMsg.putObject("matcher", matcher);
 
     eb.send(persistorAddress, findMsg, new Handler<Message<JsonObject>>() {
-      public void handle(Message<JsonObject> reply) {
-
-        if (reply.body.getString("status").equals("ok")) {
-          if (reply.body.getObject("result") != null) {
+    @Override
+    public void handle(Message<JsonObject> reply) {
+        JsonObject authData = reply.body;
+        if (authData.getString("status").equals("ok")) {
+          if (authData.getObject("result") != null) {
 
             // Check if already logged in, if so logout of the old session
             LoginInfo info = logins.get(username);
@@ -127,12 +132,16 @@ public class AuthManager extends BusModBase {
             // Found
             final String sessionID = UUID.randomUUID().toString();
             long timerID = vertx.setTimer(sessionTimeout, new Handler<Long>() {
-              public void handle(Long timerID) {
+            @Override
+            public void handle(Long timerID) {
                 sessions.remove(sessionID);
                 logins.remove(username);
               }
             });
-            sessions.put(sessionID, username);
+            
+            authData.removeField("password");
+            
+            sessions.put(sessionID, authData);
             logins.put(username, new LoginInfo(timerID, sessionID));
             JsonObject jsonReply = new JsonObject().putString("sessionID", sessionID);
             sendOK(message, jsonReply);
@@ -160,7 +169,7 @@ public class AuthManager extends BusModBase {
   }
 
   protected boolean logout(String sessionID) {
-    String username = sessions.remove(sessionID);
+    String username = sessions.remove(sessionID).getString("username");
     if (username != null) {
       LoginInfo info = logins.remove(username);
       vertx.cancelTimer(info.timerID);
@@ -175,14 +184,10 @@ public class AuthManager extends BusModBase {
     if (sessionID == null) {
       return;
     }
-    String username = sessions.get(sessionID);
+    JsonObject authData = sessions.get(sessionID);
 
-    // In this basic auth manager we don't do any resource specific authorisation
-    // The user is always authorised if they are logged in
-
-    if (username != null) {
-      JsonObject reply = new JsonObject().putString("username", username);
-      sendOK(message, reply);
+    if (authData != null) {
+      sendOK(message, authData);
     } else {
       sendStatus("denied", message);
     }

@@ -23,147 +23,173 @@ var console = require("console");
 var eb = vertx.eventBus;
 
 function testLoginDeniedEmptyDB() {
-  deleteAll();
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('denied', reply.status);
-    vassert.testComplete();
-  });
-}
-
-function testLoginDeniedNonMatchingOthers() {
-  deleteAll();
-  storeEntries({username: 'bob', password: 'wibble'},
-               {username: 'jane', password: 'uhuwdh'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('denied', reply.status);
-    vassert.testComplete();
-  });
-}
-
-function testLoginDeniedWrongPassword() {
-  deleteAll();
-  storeEntries({username: 'bob', password: 'wibble'},
-               {username: 'tim', password: 'bar'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('denied', reply.status);
-    vassert.testComplete();
-  });
-}
-
-function testLoginDeniedOtherUserWithSamePassword() {
-  deleteAll();
-  storeEntries({username: 'bob', password: 'foo'},
-               {username: 'tim', password: 'bar'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('denied', reply.status);
-    vassert.testComplete();
-  });
-}
-
-function testLoginOKOneEntryInDB() {
-  deleteAll();
-  storeEntries({username: 'tim', password: 'foo'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertTrue(typeof reply.sessionID != 'undefined');
-    vassert.testComplete();
-  });
-}
-
-function testLoginOKMultipleEntryInDB() {
-  deleteAll();
-  storeEntries({username: 'tim', password: 'foo'},
-               {username: 'bob', password: 'uahuhd'},
-               {username: 'jane', password: 'ijqiejoiwjqe'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertTrue(typeof reply.sessionID != 'undefined');
-    vassert.testComplete();
-  });
-}
-
-function testValidateDeniedNotLoggedIn() {
-  deleteAll();
-  eb.send('test.authMgr.authorise', {sessionID: 'uhiuhuhihu', password: 'foo'}, function(reply) {
-    vassert.assertEquals('denied', reply.status);
-    vassert.testComplete();
-  });
-}
-
-function testValidateDeniedInvalidSessionID() {
-  deleteAll();
-  eb.send('test.authMgr.authorise', {sessionID: 'uhiuhuhihu', password: 'foo'}, function(reply) {
-    vassert.assertEquals('denied', reply.status);
-    vassert.testComplete();
-  });
-}
-
-function testValidateDeniedLoggedInWrongSessionID() {
-  deleteAll();
-  storeEntries({username: 'tim', password: 'foo'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertTrue(typeof reply.sessionID != 'undefined');
-    eb.send('test.authMgr.authorise', {sessionID: 'uhiuhuhihu', password: 'foo'}, function(reply) {
+  deleteAll(function() {
+    eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
       vassert.assertEquals('denied', reply.status);
       vassert.testComplete();
     });
   });
 }
 
-function testValidateDeniedLoggedOut() {
-  deleteAll();
-  storeEntries({username: 'tim', password: 'foo'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    var sessionID = reply.sessionID;
-    eb.send('test.authMgr.logout', {sessionID: sessionID}, function(reply) {
-      vassert.assertEquals('ok', reply.status);
-      eb.send('test.authMgr.authorise', {sessionID: sessionID}, function(reply) {
-        vassert.assertEquals('denied', reply.status);
+function testLoginDeniedNonMatchingOthers() {
+  deleteAll(function() {
+    storeEntries({username: 'bob', password: 'wibble'},
+      {username: 'jane', password: 'uhuwdh'}, function() {
+        eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+          vassert.assertEquals('denied', reply.status);
+          vassert.testComplete();
+        });
+    });
+  });
+}
+
+function testLoginDeniedWrongPassword() {
+  deleteAll(function() {
+    storeEntries({username: 'bob', password: 'wibble'},
+      {username: 'tim', password: 'bar'}, function() {
+        eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+          vassert.assertEquals('denied', reply.status);
+          vassert.testComplete();
+        });
+      });
+  });
+
+}
+
+function testLoginDeniedOtherUserWithSamePassword() {
+  deleteAll(function() {
+    storeEntries({username: 'bob', password: 'foo'},
+      {username: 'tim', password: 'bar'}, function() {
+        eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+          vassert.assertEquals('denied', reply.status);
+          vassert.testComplete();
+        });
+      });
+  });
+}
+
+function testLoginOKOneEntryInDB() {
+  deleteAll(function() {
+    storeEntries({username: 'tim', password: 'foo'}, function() {
+      eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        vassert.assertTrue(typeof reply.sessionID != 'undefined');
         vassert.testComplete();
+      });
+    });
+  });
+
+}
+
+function testLoginOKMultipleEntryInDB() {
+  deleteAll(function() {
+    storeEntries({username: 'tim', password: 'foo'},
+      {username: 'bob', password: 'uahuhd'},
+      {username: 'jane', password: 'ijqiejoiwjqe'}, function() {
+        eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          vassert.assertTrue(typeof reply.sessionID != 'undefined');
+          vassert.testComplete();
+        });
+      });
+  });
+}
+
+function testValidateDeniedNotLoggedIn() {
+  deleteAll(function() {
+    eb.send('test.authMgr.authorise', {sessionID: 'uhiuhuhihu', password: 'foo'}, function(reply) {
+      vassert.assertEquals('denied', reply.status);
+      vassert.testComplete();
+    });
+  });
+
+}
+
+function testValidateDeniedInvalidSessionID() {
+  deleteAll(function() {
+    eb.send('test.authMgr.authorise', {sessionID: 'uhiuhuhihu', password: 'foo'}, function(reply) {
+      vassert.assertEquals('denied', reply.status);
+      vassert.testComplete();
+    });
+  });
+
+}
+
+function testValidateDeniedLoggedInWrongSessionID() {
+  deleteAll(function() {
+    storeEntries({username: 'tim', password: 'foo'}, function() {
+      eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        vassert.assertTrue(typeof reply.sessionID != 'undefined');
+        eb.send('test.authMgr.authorise', {sessionID: 'uhiuhuhihu', password: 'foo'}, function(reply) {
+          vassert.assertEquals('denied', reply.status);
+          vassert.testComplete();
+        });
+      });
+    });
+  });
+
+}
+
+function testValidateDeniedLoggedOut() {
+  deleteAll(function() {
+    storeEntries({username: 'tim', password: 'foo'}, function() {
+      eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        var sessionID = reply.sessionID;
+        eb.send('test.authMgr.logout', {sessionID: sessionID}, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          eb.send('test.authMgr.authorise', {sessionID: sessionID}, function(reply) {
+            vassert.assertEquals('denied', reply.status);
+            vassert.testComplete();
+          });
+        });
       });
     });
   });
 }
 
 function testValidateOK() {
-  deleteAll();
-  storeEntries({username: 'tim', password: 'foo'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertTrue(typeof reply.sessionID != 'undefined');
-    var sessionID = reply.sessionID;
-    eb.send('test.authMgr.authorise', {sessionID: sessionID, password: 'foo'}, function(reply) {
-      vassert.assertEquals('ok', reply.status);
-      vassert.testComplete();
+  deleteAll(function() {
+    storeEntries({username: 'tim', password: 'foo'}, function() {
+      eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        vassert.assertTrue(typeof reply.sessionID != 'undefined');
+        var sessionID = reply.sessionID;
+        eb.send('test.authMgr.authorise', {sessionID: sessionID, password: 'foo'}, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          vassert.testComplete();
+        });
+      });
     });
   });
 }
 
 function testLoginMoreThanOnce() {
-  deleteAll();
-  storeEntries({username: 'tim', password: 'foo'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    var sessionID = reply.sessionID;
-    eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-      vassert.assertEquals('ok', reply.status);
-      // Should be different session ID
-      var newSessionID = reply.sessionID;
-      vassert.assertTrue(newSessionID != sessionID);
-      eb.send('test.authMgr.logout', {sessionID: sessionID}, function(reply) {
-        vassert.assertEquals('error', reply.status);
-        vassert.assertEquals('Not logged in', reply.message);
-        eb.send('test.authMgr.authorise', {sessionID: sessionID}, function(reply) {
-          vassert.assertEquals('denied', reply.status);
-          eb.send('test.authMgr.authorise', {sessionID: newSessionID}, function(reply) {
-            vassert.assertEquals('ok', reply.status);
-            eb.send('test.authMgr.logout', {sessionID: newSessionID}, function(reply) {
-              vassert.assertEquals('ok', reply.status);
+  deleteAll(function() {
+    storeEntries({username: 'tim', password: 'foo'}, function() {
+      eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        var sessionID = reply.sessionID;
+        eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          // Should be different session ID
+          var newSessionID = reply.sessionID;
+          vassert.assertTrue(newSessionID != sessionID);
+          eb.send('test.authMgr.logout', {sessionID: sessionID}, function(reply) {
+            vassert.assertEquals('error', reply.status);
+            vassert.assertEquals('Not logged in', reply.message);
+            eb.send('test.authMgr.authorise', {sessionID: sessionID}, function(reply) {
+              vassert.assertEquals('denied', reply.status);
               eb.send('test.authMgr.authorise', {sessionID: newSessionID}, function(reply) {
-                vassert.assertEquals('denied', reply.status);
-                vassert.testComplete();
+                vassert.assertEquals('ok', reply.status);
+                eb.send('test.authMgr.logout', {sessionID: newSessionID}, function(reply) {
+                  vassert.assertEquals('ok', reply.status);
+                  eb.send('test.authMgr.authorise', {sessionID: newSessionID}, function(reply) {
+                    vassert.assertEquals('denied', reply.status);
+                    vassert.testComplete();
+                  });
+                });
               });
             });
           });
@@ -174,22 +200,27 @@ function testLoginMoreThanOnce() {
 }
 
 function testLoginMoreThanOnceThenLogout() {
-  deleteAll();
-  storeEntries({username: 'tim', password: 'foo'});
-  eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    var sessionID = reply.sessionID;
-    eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
-      vassert.assertEquals('ok', reply.status);
-      // Should be different session ID
-      vassert.assertTrue(reply.sessionID != sessionID);
-      vassert.testComplete();
+  deleteAll(function() {
+    storeEntries({username: 'tim', password: 'foo'}, function() {
+      eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        var sessionID = reply.sessionID;
+        eb.send('test.authMgr.login', {username: 'tim', password: 'foo'}, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          // Should be different session ID
+          vassert.assertTrue(reply.sessionID != sessionID);
+          vassert.testComplete();
+        });
+      });
     });
   });
 }
 
 function storeEntries() {
-  for (var i = 0; i < arguments.length; i++) {
+  var doneHandler = arguments[arguments.length - 1];
+  var count = 0;
+  var numToStore = arguments.length - 1;
+  for (var i = 0; i < arguments.length - 1; i++) {
     var entry = arguments[i];
     eb.send('test.persistor', {
       collection: 'users',
@@ -197,22 +228,26 @@ function storeEntries() {
       document: entry
     }, function(reply) {
       vassert.assertEquals('ok', reply.status);
+      if (++count == numToStore) {
+        doneHandler();
+      }
     });
   }
 }
 
-function deleteAll() {
+function deleteAll(doneHandler) {
   eb.send('test.persistor', {
     collection: 'users',
     action: 'delete',
     matcher: {}
   }, function(reply) {
     vassert.assertEquals('ok', reply.status);
+    doneHandler();
   });
 }
 
 var script = this;
-var persistorConfig = {address: 'test.persistor', db_name : 'test_db', fake: true}
+var persistorConfig = {address: 'test.persistor', db_name : 'test_db', fake: false}
 var authMgrConfig = {address: 'test.authMgr', 'persistor_address' : 'test.persistor', 'user_collection': 'users'}
 container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-SNAPSHOT', persistorConfig, 1, function(err, depID) {
   container.deployModule(java.lang.System.getProperty("vertx.modulename"), authMgrConfig, 1, function(err, depID) {

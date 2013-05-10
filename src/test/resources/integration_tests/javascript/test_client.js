@@ -247,7 +247,19 @@ function deleteAll(doneHandler) {
 }
 
 var script = this;
-var persistorConfig = {address: 'test.persistor', db_name : 'test_db', fake: false}
+var persistorConfig =
+{
+  address: 'test.persistor',
+  db_name: java.lang.System.getProperty("vertx.mongo.database", "test_db"),
+  host: java.lang.System.getProperty("vertx.mongo.host", "localhost"),
+  port: java.lang.Integer.valueOf(java.lang.System.getProperty("vertx.mongo.port", "27017"))
+}
+var username = java.lang.System.getProperty("vertx.mongo.username");
+var password = java.lang.System.getProperty("vertx.mongo.password");
+if (username != null) {
+  persistorConfig.username = username;
+  persistorConfig.password = password;
+}
 var authMgrConfig = {address: 'test.authMgr', 'persistor_address' : 'test.persistor', 'user_collection': 'users'}
 container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-SNAPSHOT', persistorConfig, 1, function(err, depID) {
   container.deployModule(java.lang.System.getProperty("vertx.modulename"), authMgrConfig, 1, function(err, depID) {

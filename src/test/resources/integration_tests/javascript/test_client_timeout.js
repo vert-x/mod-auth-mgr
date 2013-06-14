@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-var container = require("container")
+var container = require("vertx/container")
 var vertx = require("vertx");
 var vertxTests = require("vertx_tests");
 var vassert = require("vertx_assert");
-var console = require("console");
+var console = require("vertx/console");
 
 var eb = vertx.eventBus;
 
@@ -93,7 +93,7 @@ if (username != null) {
 
 var authMgrConfig = {address: 'test.authMgr', 'persistor_address' : 'test.persistor', 'user_collection': 'users',
                      session_timeout: 200}
-container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-beta1', persistorConfig, function(err, depID) {
+container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-CR1', persistorConfig, function(err, depID) {
   if (err != null) {
     err.printStackTrace();
   }

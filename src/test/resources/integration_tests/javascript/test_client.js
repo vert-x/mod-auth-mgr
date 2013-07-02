@@ -261,7 +261,7 @@ if (username != null) {
   persistorConfig.password = password;
 }
 var authMgrConfig = {address: 'test.authMgr', 'persistor_address' : 'test.persistor', 'user_collection': 'users'}
-container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-CR1', persistorConfig, 1, function(err, depID) {
+container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-CR2', persistorConfig, 1, function(err, depID) {
   container.deployModule(java.lang.System.getProperty("vertx.modulename"), authMgrConfig, 1, function(err, depID) {
     vertxTests.startTests(script);
   });

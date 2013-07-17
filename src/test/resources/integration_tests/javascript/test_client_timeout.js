@@ -93,7 +93,7 @@ if (username != null) {
 
 var authMgrConfig = {address: 'test.authMgr', 'persistor_address' : 'test.persistor', 'user_collection': 'users',
                      session_timeout: 200}
-container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-CR2', persistorConfig, function(err, depID) {
+container.deployModule('io.vertx~mod-mongo-persistor~2.0.0-final', persistorConfig, function(err, depID) {
   if (err != null) {
     err.printStackTrace();
   }

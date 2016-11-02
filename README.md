@@ -1,4 +1,6 @@
-# Authentication/Authorisation Manager
+# Vert.x 2.x is **deprecated** - use instead http://vertx.io/docs/#authentication_and_authorisation
+
+## Authentication/Authorisation Manager
 
 This is a basic auth manager that verifies usernames and passwords in a MongoDB database and generates time-limited session ids. These session ids can be passed around the event bus.
 
@@ -8,15 +10,15 @@ Sessions time out after a certain amount of time. After that time, they will not
 
 This busmod, is used in the web application tutorial to handle simple user/password authorisation for the application.
 
-## Dependencies
+### Dependencies
 
 This busmod requires a MongoDB persistor busmod to be running to allow searching for usernames and passwords.
 
-## Name
+### Name
 
 The module name is `auth-mgr`.
 
-## Configuration
+### Configuration
 
 This busmod takes the following configuration:
 
@@ -43,9 +45,9 @@ Let's take a look at each field in turn:
 * `persistor_address` Address of the persistor busmod to use for usernames and passwords. This field is optional. Default value is `vertx.mongopersistor`.
 * `session_timeout` Timeout of a session, in milliseconds. This field is optional. Default value is `1800000` (30 minutes).
 
-## Operations
+### Operations
 
-### Login
+#### Login
 
 Login with a username and password and obtain a session id if successful.
 
@@ -73,7 +75,7 @@ If login is unsuccessful the following reply will be returned:
         "status": "denied"    
     }
     
-### Logout
+#### Logout
 
 Logout and close a session. Any subsequent attempts to validate the session id will fail.
 
@@ -99,7 +101,7 @@ Otherwise, if the session id is not known about:
         "status": "error"    
     }   
     
-### Authorise
+#### Authorise
 
 Authorise a session id.
 

@@ -37,7 +37,7 @@ public class AuthManager extends BusModBase {
   private Handler<Message<JsonObject>> logoutHandler;
   private Handler<Message<JsonObject>> authoriseHandler;
 
-  protected final Map<String, String> sessions = new HashMap<>();
+  protected final Map<String, JsonObject> sessions = new HashMap<>();
   protected final Map<String, LoginInfo> logins = new HashMap<>();
 
   private static final long DEFAULT_SESSION_TIMEOUT = 30 * 60 * 1000;
@@ -113,11 +113,11 @@ public class AuthManager extends BusModBase {
     findMsg.putObject("matcher", matcher);
 
     eb.send(persistorAddress, findMsg, new Handler<Message<JsonObject>>() {
+
       public void handle(Message<JsonObject> reply) {
-
         if (reply.body().getString("status").equals("ok")) {
-          if (reply.body().getObject("result") != null) {
 
+          if (reply.body().getObject("result") != null) {
             // Check if already logged in, if so logout of the old session
             LoginInfo info = logins.get(username);
             if (info != null) {
@@ -132,10 +132,13 @@ public class AuthManager extends BusModBase {
                 logins.remove(username);
               }
             });
-            sessions.put(sessionID, username);
+
+            JsonObject sessionData = formSessionData(reply, sessionID);
+
+            sessions.put(sessionID, sessionData);
             logins.put(username, new LoginInfo(timerID, sessionID));
-            JsonObject jsonReply = new JsonObject().putString("sessionID", sessionID);
-            sendOK(message, jsonReply);
+            
+            sendOK(message, sessionData);
           } else {
             // Not found
             sendStatus("denied", message);
@@ -146,6 +149,17 @@ public class AuthManager extends BusModBase {
         }
       }
     });
+  }
+
+  private JsonObject formSessionData(Message<JsonObject> dbReply, final String sessionID) {
+      //Put record returned from the db as session data 
+      JsonObject sessionData = dbReply.body().getObject("result");
+
+      //remove id and password so that we dont send it back over the wire
+      sessionData.removeField("_id");
+      sessionData.removeField("password");
+      sessionData.putString("sessionID", sessionID);
+      return sessionData;
   }
 
   protected void doLogout(final Message<JsonObject> message) {
@@ -160,7 +174,11 @@ public class AuthManager extends BusModBase {
   }
 
   protected boolean logout(String sessionID) {
-    String username = sessions.remove(sessionID);
+    JsonObject session = sessions.remove(sessionID);
+    if (session == null)
+        return false;
+
+    String username = session.getString("username");
     if (username != null) {
       LoginInfo info = logins.remove(username);
       vertx.cancelTimer(info.timerID);
@@ -175,14 +193,10 @@ public class AuthManager extends BusModBase {
     if (sessionID == null) {
       return;
     }
-    String username = sessions.get(sessionID);
+    JsonObject authData = sessions.get(sessionID);
 
-    // In this basic auth manager we don't do any resource specific authorisation
-    // The user is always authorised if they are logged in
-
-    if (username != null) {
-      JsonObject reply = new JsonObject().putString("username", username);
-      sendOK(message, reply);
+    if (authData != null) {
+      sendOK(message, authData);
     } else {
       sendStatus("denied", message);
     }
